@@ -63,30 +63,6 @@ public sealed interface ExprToken {
                 continue;
             }
 
-            for (Keyword keyword : keywords) {
-                if (end - start < keyword.content.length()) continue;
-                if (!keyword.content.contentEquals(input.subSequence(start, start + keyword.content.length())))
-                    continue;
-
-                collector.accept(keyword);
-                start += keyword.content.length();
-                continue outer;
-            }
-
-            if (Character.isJavaIdentifierStart(input.charAt(start))) {
-                buf.push(input.charAt(start));
-                start++;
-
-                while (start < end && Character.isJavaIdentifierPart(input.charAt(start))) {
-                    buf.push(input.charAt(start));
-                    start++;
-                }
-
-                collector.accept(new Symbol(buf.toString()));
-                buf.clear();
-                continue;
-            }
-
             if (input.charAt(start) == '0') {
                 start++;
                 char ch;
@@ -105,8 +81,8 @@ public sealed interface ExprToken {
                     intg = "0";
                     start++;
                 } else {
-                    throw new IllegalArgumentException("Invalid '%s' at index %d in '%s', expecting [0-7] or 'x'"
-                        .formatted(input.charAt(start), start, input));
+                    collector.accept(new NumberLiteral("0", "", TYPE_DECIMAL));
+                    continue;
                 }
 
                 while (start < end
@@ -133,9 +109,13 @@ public sealed interface ExprToken {
                 continue;
             }
 
-            if (input.charAt(start) == '.' || (input.charAt(start) >= '1' && input.charAt(start) <= '9')) {
+            if ((input.charAt(start) >= '1' && input.charAt(start) <= '9') ||
+                (start + 1 < end
+                    && input.charAt(start) == '.'
+                    && input.charAt(start + 1) >= '0'
+                    && input.charAt(start + 1) <= '9')) {
                 String intg = input.charAt(start) == '.' ? "" : null;
-                buf.push(input.charAt(start));
+                if (input.charAt(start) >= '0' && input.charAt(start) <= '9') buf.push(input.charAt(start));
                 start++;
 
                 while (start < end && ((input.charAt(start) >= '0' && input.charAt(start) <= '9')
@@ -153,6 +133,30 @@ public sealed interface ExprToken {
                 collector.accept(intg != null
                     ? new NumberLiteral(intg, buf.toString(), NumberLiteral.TYPE_DECIMAL)
                     : new NumberLiteral(buf.toString(), "", NumberLiteral.TYPE_DECIMAL));
+                buf.clear();
+                continue;
+            }
+
+            for (Keyword keyword : keywords) {
+                if (end - start < keyword.content.length()) continue;
+                if (!keyword.content.contentEquals(input.subSequence(start, start + keyword.content.length())))
+                    continue;
+
+                collector.accept(keyword);
+                start += keyword.content.length();
+                continue outer;
+            }
+
+            if (Character.isJavaIdentifierStart(input.charAt(start))) {
+                buf.push(input.charAt(start));
+                start++;
+
+                while (start < end && Character.isJavaIdentifierPart(input.charAt(start))) {
+                    buf.push(input.charAt(start));
+                    start++;
+                }
+
+                collector.accept(new Symbol(buf.toString()));
                 buf.clear();
                 continue;
             }

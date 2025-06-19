@@ -107,6 +107,7 @@ public interface Value {
             return switch (op) {
             case INVERT -> new JavaLong(~value);
             case NEGATE -> new JavaLong(-value);
+            case NOT -> new JavaLong(value != 0 ? 0 : 1);
             default -> Value.super.op(op);
             };
         }
@@ -162,6 +163,7 @@ public interface Value {
         public Value op(UnaryOp op) {
             return switch (op) {
             case NEGATE -> new JavaDouble(-value);
+            case NOT -> new JavaLong(value != 0 ? 0 : 1);
             default -> Value.super.op(op);
             };
         }
@@ -194,8 +196,13 @@ public interface Value {
     record JavaString(String value) implements Value {
         @Override
         public Value op(BinaryOp op, Value another) {
-            if (op == BinaryOp.ADD) return new JavaString(value + another);
-            return Value.super.op(op, another);
+            String a = another instanceof JavaString s ? s.value : another.toString();
+
+            return switch (op) {
+            case ADD -> new JavaString(value + a);
+            case EQUALS -> new JavaLong(value.equals(a) ? 1 : 0);
+            default -> Value.super.op(op, another);
+            };
         }
 
         @Override
