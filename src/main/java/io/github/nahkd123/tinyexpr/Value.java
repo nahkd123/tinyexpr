@@ -67,6 +67,7 @@ public interface Value {
      */
     static Value wrap(Object value) {
         return switch (value) {
+        case Boolean v -> new LongValue(v ? 1 : 0);
         case Byte v -> new LongValue(v);
         case Short v -> new LongValue(v);
         case Integer v -> new LongValue(v);
