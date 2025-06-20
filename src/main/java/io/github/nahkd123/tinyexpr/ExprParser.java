@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import io.github.nahkd123.tinyexpr.impl.DoubleValue;
+import io.github.nahkd123.tinyexpr.impl.LongValue;
+import io.github.nahkd123.tinyexpr.impl.StringValue;
+
 /**
  * <p>
  * This class provides parse static methods, as well as instance methods for
@@ -344,7 +348,7 @@ public class ExprParser {
      * @return Runtime value.
      */
     protected Value valueOf(ExprToken.StringLiteral literal) {
-        return new Value.JavaString(literal.value());
+        return new StringValue(literal.value());
     }
 
     /**
@@ -364,14 +368,14 @@ public class ExprParser {
         };
 
         long intg = literal.intg().length() == 0 ? 0L : Long.parseUnsignedLong(literal.intg(), base);
-        if (literal.frac().length() == 0) return new Value.JavaLong(intg);
+        if (literal.frac().length() == 0) return new LongValue(intg);
 
         long frac = Long.parseUnsignedLong(literal.frac(), base);
         double fracMax = base == 10
             ? Math.pow(10, literal.frac().length())
             : 1 << (literal.frac().length() * (base == 16 ? 4 : 3));
 
-        return new Value.JavaDouble(intg + frac / fracMax);
+        return new DoubleValue(intg + frac / fracMax);
     }
 
     /**
